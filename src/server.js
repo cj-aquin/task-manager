@@ -42,6 +42,25 @@ app.get('/api/tasks', (req, res) => {
     });
 });
 
+// Search tasks by title (case-insensitive, partial match)
+// Example: GET /api/tasks/search?q=buy
+app.get('/api/tasks/search', (req, res) => {
+    const q = req.query.q;
+    if (!q) {
+        return res.status(400).json({ error: 'q query parameter is required' });
+    }
+
+    const sql = 'SELECT * FROM tasks WHERE title LIKE ? COLLATE NOCASE ORDER BY id DESC';
+    const param = `%${q}%`;
+    db.all(sql, [param], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
 // Add a new task
 app.post('/api/tasks', (req, res)=> {
     const {title} = req.body;
