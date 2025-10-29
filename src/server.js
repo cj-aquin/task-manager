@@ -4,6 +4,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const { timeStamp } = require('console');
 
 
 const app = express();
@@ -15,8 +16,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize SQLite database
-const dbPath = path.join(__dirname, 'db', 'tasks.db');
-const db = new sqlite3.Database(dbPath);
+const dbPath = process.env.NODE_ENV === 'production'
+    ? path.join(__dirname, 'db', 'tasks.db')
+    : path.join(__dirname, 'tasks.db');
+ const db = new sqlite3.Database(dbPath);
 
 //Create a task table
 db.serialize(() => {
@@ -100,6 +103,11 @@ app.delete('/api/tasks/:id', (req, res) => {
 // Serve the main page 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+    res.json({status: 'OK', timestamp: new Date().toISOString()});
 });
 
 app.listen(PORT, () => {
